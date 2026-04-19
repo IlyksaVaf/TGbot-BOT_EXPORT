@@ -9,6 +9,7 @@
 Есть меню /help с полезной информацией для пользователя.
 
 В качестве базы данных используется PostgreSQL:
+
 3 таблицы:
 1. chats (chat_id, message_id)
 2. links (chat_id(fk), links_text, id)
