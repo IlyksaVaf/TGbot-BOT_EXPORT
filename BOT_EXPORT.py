@@ -17,7 +17,7 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
 )
 
 
-def get_links_text(chat_id):
+def get_links_text(chat_id: int) -> str:
     """Вспомогательная функция для сборки текста списка ссылок"""
     conn = db_pool.getconn()
     cursor = conn.cursor()
@@ -38,7 +38,7 @@ def get_links_text(chat_id):
     return text        
     
 @bot.message_handler(commands=['start'])
-def main(message):
+def main(message: telebot.types.Message):
     """Сообщение после /start"""
     markup = types.ReplyKeyboardMarkup()
     btn1 = types.KeyboardButton('Отправить Мастер-Сообщение')
@@ -51,12 +51,12 @@ def main(message):
     bot.send_message(message.chat.id, f"Бот активирован. \nЧем могу помочь, {message.from_user.first_name}?", reply_markup=markup)
     
 @bot.message_handler(commands=['help'])
-def help(message):
+def help(message: telebot.types.Message):
     """Полезная информация"""
     bot.send_message(message.chat.id, 'Чтобы добавить ссылку, просто пришлите ее мне!\n\nЕсли вы хотите поменять название ссылки, удалите ее и заново добавьте.\nЕсли не указать название, то оно будет = "None"\n\n📝Список доступных комманд: \n/start\n/help\n/delete_all')
     
 @bot.message_handler(commands=['delete_all'])
-def delete_all_links(message):
+def delete_all_links(message: telebot.types.Message):
     """Удаляет все ссылки у пользователя"""
     conn = db_pool.getconn()
     cursor = conn.cursor()
@@ -70,7 +70,7 @@ def delete_all_links(message):
     bot.send_message(message.chat.id, 'Ссылки удалены')
     
 @bot.message_handler(func=lambda message: message.text and ('http://' in message.text or 'https://' in message.text))
-def handle_links(message):
+def handle_links(message: telebot.types.Message):
     """Добавляет значение в мастер-сообщение"""
     chat_id = message.chat.id
     link_text = message.text
@@ -107,7 +107,7 @@ def handle_links(message):
         cursor.close()
         db_pool.putconn(conn)
 
-def generate_dynamic_buttonsDEL(button_texts, row_width,rows):
+def generate_dynamic_buttonsDEL(button_texts: str, row_width: int,rows) -> telebot.types.InlineKeyboardMarkup:
     markup = types.InlineKeyboardMarkup()
     for i, row in enumerate(rows, 1):
         link_id = row[0]
@@ -121,7 +121,7 @@ def generate_dynamic_buttonsDEL(button_texts, row_width,rows):
         markup.add(button)
     return markup   
 
-def generate_dynamic_buttonsADD(button_texts, row_width,rows):
+def generate_dynamic_buttonsADD(button_texts: str, row_width: int,rows) -> telebot.types.InlineKeyboardMarkup:
     markup = types.InlineKeyboardMarkup()
     for i, row in enumerate(rows, 1):
         link_id = row[0]
@@ -136,7 +136,7 @@ def generate_dynamic_buttonsADD(button_texts, row_width,rows):
     return markup   
 
 @bot.message_handler()
-def dispetcher(message):
+def dispetcher(message: telebot.types.Message):
     """Вызывает функции, в ответ на сообщения"""
     text = message.text.lower()
     if text == 'отправить мастер-сообщение':
@@ -148,7 +148,7 @@ def dispetcher(message):
     elif message.text.lower() == 'добавить название ссылке': 
         add_name(message)   
                
-def send_message(message):
+def send_message(message: telebot.types.Message):
     """Отправляет мастер-сообщение"""
     chat_id = message.chat.id
     current_text = get_links_text(chat_id)
@@ -165,7 +165,7 @@ def send_message(message):
     cursor.close()
     db_pool.putconn(conn)
     
-def delete_copy(message):
+def delete_copy(message: telebot.types.Message):
     """Удаляет копии ссылок, кроме самой старой"""
     conn = db_pool.getconn()
     cursor = conn.cursor()
@@ -183,7 +183,7 @@ def delete_copy(message):
     db_pool.putconn(conn)
     bot.send_message(message.chat.id, 'Дубликаты ссылок удалены')
     
-def delete_link(message):
+def delete_link(message: telebot.types.Message):
     """Предоставляет пользователю выбор, какую ссылку удалить"""
     chat_id = message.chat.id
     
@@ -208,7 +208,7 @@ def delete_link(message):
         db_pool.putconn(conn)
         
 @bot.callback_query_handler(func=lambda call: call.data.startswith('DEL'))
-def callback_delete_link(call):
+def callback_delete_link(call: telebot.types.CallbackQuery):
     """Удаляет ссылку, выбранную пользователем"""
     conn = db_pool.getconn()
     cursor = conn.cursor()
@@ -236,7 +236,7 @@ def callback_delete_link(call):
         cursor.close()
         db_pool.putconn(conn)   
          
-def add_name(message):
+def add_name(message: telebot.types.Message):
     """Предоставляет пользователю выбор, какой ссылке добавить название"""
     chat_id = message.chat.id
         
@@ -263,7 +263,7 @@ def add_name(message):
 user_pending_name = {} #Временное хранилище
      
 @bot.callback_query_handler(func=lambda call: call.data.startswith('ADD'))
-def callback_add_name(call):
+def callback_add_name(call: telebot.types.CallbackQuery):
     """Запоминает выбор поьзователя и спрашивает какое название вставить"""       
     chat_id = call.message.chat.id
     links_id = int(call.data.replace('ADD',''))
@@ -276,7 +276,7 @@ def callback_add_name(call):
     bot.register_next_step_handler(call.message, add_link_name)
     
 @bot.message_handler(func=lambda message: message.chat.id in user_pending_name)
-def add_link_name(message):
+def add_link_name(message: telebot.types.Message):
     """Добавляет название для ссылки"""
     chat_id = message.chat.id
     link_id = user_pending_name.pop(chat_id)
